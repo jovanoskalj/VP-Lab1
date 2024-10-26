@@ -32,7 +32,7 @@ public class EventBookingServlet extends HttpServlet {
 
         String eventName = req.getParameter("eventName");
         String attendeeName = req.getParameter("attendeeName");
-        String attendeeAddress = req.getParameter("attendeeAddress");
+        String attendeeAddress = req.getRemoteAddr();
         int numberOfTickets = Integer.parseInt(req.getParameter("numberOfTickets"));
 
         EventBooking booking = bookingService.placeBooking(eventName, attendeeName, attendeeAddress, numberOfTickets);

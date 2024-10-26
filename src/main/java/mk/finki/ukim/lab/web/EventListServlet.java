@@ -15,7 +15,7 @@ import org.thymeleaf.web.servlet.JakartaServletWebApplication;
 import java.io.IOException;
 import java.util.List;
 
-@WebServlet(name="event-servlet", urlPatterns = "/")
+@WebServlet(name="event-servlet", urlPatterns = "/*")
 
 public class EventListServlet extends HttpServlet {
 private final EventService eventService;
@@ -28,14 +28,32 @@ private final SpringTemplateEngine springTemplateEngine;
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-
         IWebExchange webExchange = JakartaServletWebApplication
                 .buildApplication(getServletContext())
                 .buildExchange(req, resp);
 
-        List<Event> events = eventService.listAll(); // Fetch all events
-        WebContext context = new WebContext(webExchange,req.getLocale());
-        context.setVariable("events", events); // Add events to the context
+
+        String searchText = req.getParameter("searchText");
+        String minRatingParam = req.getParameter("minRating");
+
+        List<Event> events;
+        events = eventService.listAll();
+        if ((searchText == null || searchText.isEmpty()) && (minRatingParam == null || minRatingParam.isEmpty())) {
+
+            events = eventService.listAll();
+        } else {
+
+            double minRating = minRatingParam != null && !minRatingParam.isEmpty() ? Double.parseDouble(minRatingParam) : 0.0;
+            // Search events based on criteria
+            events = eventService.searchEvents(searchText, minRating);
+        }
+
+        // Set up Thymeleaf context
+        WebContext context = new WebContext(webExchange, req.getLocale());
+        // Capture the client IP address
+        String clientIpAddress = req.getRemoteAddr();
+        context.setVariable("clientIpAddress", clientIpAddress);
+        context.setVariable("events", events);
         springTemplateEngine.process("listEvents.html", context, resp.getWriter());
     }
 
